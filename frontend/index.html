@@ -14,6 +14,21 @@
             <button class="option-button" onclick="showUploadSection()">Upload Photo</button>
         </div>
     </div>
+
+    <!-- Camera View -->
+    <div class="camera-container" id="cameraContainer">
+        <div class="camera-view">
+            <div class="camera-guidance">Face a light source, align your face, take off your glasses, and tuck your hair behind your ears</div>
+            <video id="videoElement" autoplay playsinline></video>
+            <div class="camera-overlay"></div>
+            <div class="face-outline"></div>
+            <div class="camera-buttons">
+                <button class="camera-button" onclick="closeCamera()">Close</button>
+                <button class="camera-button primary" onclick="capturePhoto()">Take Photo</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/script.js"></script>
 </body>
 </html>

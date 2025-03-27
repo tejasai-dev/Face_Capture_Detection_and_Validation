@@ -13,6 +13,15 @@
             <button class="option-button active" onclick="startCamera()">Take Photo</button>
             <button class="option-button" onclick="showUploadSection()">Upload Photo</button>
         </div>
+        <div class="upload-section" id="dropZone">
+            <p>Click To Upload An Image Of Your Face For Face Detection</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            <img id="previewImage" class="preview-image" alt="Preview">
+            <div class="upload-buttons" id="uploadButtons">
+                <button class="upload-button" onclick="submitPhoto(); event.stopPropagation();">Submit Photo</button>
+                <button class="upload-button reset" onclick="resetUpload(); event.stopPropagation();">Reset</button>
+            </div>
+        </div>
     </div>
 
     <!-- Camera View -->

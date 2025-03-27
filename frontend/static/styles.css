@@ -57,6 +57,75 @@ h1 {
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Upload Section Styles */
+.upload-section {
+    display: none;
+    text-align: center;
+    padding: 50px;
+    border: 3px dashed #ff6b00;
+    border-radius: 20px;
+    margin: 20px auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    max-width: 500px;
+    background-color: rgba(255, 107, 0, 0.05);
+    color: #000000;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.1);
+}
+
+.upload-section:hover {
+    background-color: rgba(255, 107, 0, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.15);
+}
+
+.upload-section.dragover {
+    background-color: rgba(255, 107, 0, 0.12);
+    border-color: #ff8533;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 107, 0, 0.2);
+}
+
+.preview-image {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 12px;
+    margin: 20px auto;
+    display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upload-buttons {
+    display: none;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.upload-button {
+    padding: 12px 28px;
+    font-size: 16px;
+    border: none;
+    border-radius: 30px;
+    background-color: #ff6b00;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(255, 107, 0, 0.2);
+}
+
+.upload-button.reset {
+    background-color: #ffffff;
+    color: #ff6b00;
+    border: 2px solid #ff6b00;
+}
+
+.upload-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(255, 107, 0, 0.3);
+}
+
 /* Camera Styles */
 .camera-container {
     display: none;

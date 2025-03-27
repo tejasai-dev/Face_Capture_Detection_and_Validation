@@ -3,8 +3,14 @@ let isCamera = true; // Track current mode
 const videoElement = document.getElementById('videoElement');
 const cameraContainer = document.getElementById('cameraContainer');
 const dialogOverlay = document.getElementById('dialogOverlay');
+const dialogTitle = document.getElementById('dialogTitle');
+const dialogMessage = document.getElementById('dialogMessage');
+const dialogButton = document.getElementById('dialogButton');
+const dialogIcon = document.getElementById('dialogIcon');
+const dialogImage = document.getElementById('dialogImage');
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
+const loading = document.getElementById('loading');
 const optionButtons = document.querySelectorAll('.option-button');
 let selectedFile = null;
 
@@ -124,4 +130,86 @@ async function capturePhoto() {
         const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" });
         await handleFile(file);
     }, 'image/jpeg');
+}
+
+function showDialog(type, title, message, imageUrl = null) {
+    dialogTitle.textContent = title;
+    dialogMessage.textContent = message;
+    
+    // Set icon and button text based on type
+    if (type === 'success') {
+        dialogIcon.textContent = '✓';
+        dialogIcon.className = 'success-icon';
+        dialogButton.textContent = 'OK';
+    } else {
+        dialogIcon.textContent = '⚠️';
+        dialogIcon.className = 'error-icon';
+        dialogButton.textContent = isCamera ? 'Retake Photo' : 'Reupload Photo';
+    }
+    
+    // Handle image display
+    if (imageUrl) {
+        dialogImage.src = imageUrl;
+        dialogImage.style.display = 'block';
+    } else {
+        dialogImage.style.display = 'none';
+    }
+    
+    dialogOverlay.style.display = 'flex';
+}
+
+function handleDialogButton() {
+    dialogOverlay.style.display = 'none';
+    dialogImage.style.display = 'none';
+    if (dialogButton.textContent === 'OK') {
+        // Handle success case
+        if (isCamera) {
+            startCamera();
+        } else {
+            showUploadSection();
+        }
+    } else if (!isCamera) {
+        resetUpload();
+    }
+}
+
+async function handleFile(file) {
+    loading.style.display = 'block';
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/validate-image', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            if (data.type === 'multiple_faces' && data.image_with_bboxes) {
+                showDialog(
+                    'error',
+                    'Multiple Faces Detected in the Uploaded Image',
+                    'Retry with a Single Face Image',
+                    `/temp_image/${data.image_with_bboxes}`
+                );
+            } else {
+                showDialog('error', 'Error', data.message);
+            }
+        } else {
+            closeCamera();
+            showDialog(
+                'success',
+                'Success!',
+                'Your image has passed all checks and has been saved successfully.',
+                data.image_path
+            );
+        }
+    } catch (error) {
+        showDialog('error', 'Error', 'An error occurred while processing the image.');
+        console.error('Error:', error);
+    } finally {
+        loading.style.display = 'none';
+    }
 }

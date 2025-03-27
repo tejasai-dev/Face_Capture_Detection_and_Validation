@@ -22,6 +22,7 @@
                 <button class="upload-button reset" onclick="resetUpload(); event.stopPropagation();">Reset</button>
             </div>
         </div>
+        <div class="loading" id="loading"></div>
     </div>
 
     <!-- Camera View -->
@@ -35,6 +36,17 @@
                 <button class="camera-button" onclick="closeCamera()">Close</button>
                 <button class="camera-button primary" onclick="capturePhoto()">Take Photo</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Dialog -->
+    <div class="dialog-overlay" id="dialogOverlay">
+        <div class="dialog-box">
+            <div id="dialogIcon" class="error-icon">⚠️</div>
+            <h2 id="dialogTitle">Unable to track face</h2>
+            <p id="dialogMessage">Make sure your face is evenly lit,<br>and your ears are visible</p>
+            <img id="dialogImage" class="dialog-image" alt="Face detection result">
+            <button class="dialog-button" id="dialogButton" onclick="handleDialogButton()">Retake Photo</button>
         </div>
     </div>
 

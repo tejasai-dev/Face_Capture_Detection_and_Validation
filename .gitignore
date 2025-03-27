@@ -1,0 +1,8 @@
+# Ignore virtual environment
+face_capture_env/
+
+# Ignore models folder
+models/
+
+# Ignore __pycache__ ONLY inside backend directory
+backend/__pycache__/

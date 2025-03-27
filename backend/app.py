@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import cv2
@@ -8,6 +8,9 @@ import numpy as np
 from insightface.app import FaceAnalysis
 from insightface.model_zoo import get_model
 from numpy.linalg import norm
+import tempfile
+import uuid
+import shutil
 
 # Get the base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -75,3 +78,113 @@ def get_face_embedding(image_path):
 async def serve_homepage():
     """Serve the main index.html file"""
     return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+
+@app.post("/validate-image")
+async def validate_image(file: UploadFile = File(...)):
+    try:
+        # 1. Validate image format
+        if not file.filename.lower().endswith((".jpg", ".jpeg", ".png")):
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "Unsupported file format. Please upload a JPG, JPEG, or PNG image.",
+                    "type": "format_error"
+                }
+            )
+        
+        # Save temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[-1]) as temp:
+            temp.write(file.file.read())
+            temp_image_path = temp.name
+
+        if not os.path.exists(temp_image_path) or os.path.getsize(temp_image_path) == 0:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "Invalid or empty image file.",
+                    "type": "file_error"
+                }
+            )
+
+        # 2. Check for face presence and handle multiple faces
+        embedding, error, img = get_face_embedding(temp_image_path)
+        
+        if error:
+            if isinstance(error, str) and img is not None:
+                # Save the image with bounding boxes for multiple faces
+                unique_filename = f"multiple_faces_{uuid.uuid4()}.png"
+                output_image_path = os.path.join(tempfile.gettempdir(), unique_filename)
+                cv2.imwrite(output_image_path, img)
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "message": "Multiple faces detected in the image.",
+                        "type": "multiple_faces",
+                        "image_with_bboxes": unique_filename
+                    }
+                )
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": error,
+                    "type": "face_detection_error"
+                }
+            )
+            
+        # 3. Check against Guru Dev
+        threshold = 0.45
+        for guru_embedding in gurudev_embedding_list:
+            similarity = cosine_similarity(embedding, guru_embedding)
+            if similarity > threshold:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "message": "The Uploaded Image belongs to \"Guru Dev\". We can't process this image. Try to upload your image again.",
+                        "type": "guru_dev_match"
+                    }
+                )
+
+        # If all checks pass, save the image to uploads directory
+        unique_filename = f"face_{uuid.uuid4()}{os.path.splitext(file.filename)[-1]}"
+        upload_path = os.path.join(UPLOADS_DIR, unique_filename)
+        shutil.copy2(temp_image_path, upload_path)
+
+        # Clean up temp file
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Image validation successful. Your image has been saved.",
+                "type": "success",
+                "image_path": f"/uploads/{unique_filename}"
+            }
+        )
+    
+    except Exception as e:
+        if 'temp_image_path' in locals() and os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"An error occurred: {str(e)}",
+                "type": "server_error"
+            }
+        )
+
+@app.get("/temp_image/{image_name}")
+async def get_temp_image(image_name: str):
+    """Serve temporary images (like multiple face detection results)"""
+    image_path = os.path.join(tempfile.gettempdir(), image_name)
+    if os.path.exists(image_path):
+        return FileResponse(image_path)
+    else:
+        raise HTTPException(status_code=404, detail="Image not found")

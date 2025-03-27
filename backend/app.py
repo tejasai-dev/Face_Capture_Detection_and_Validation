@@ -11,6 +11,8 @@ from numpy.linalg import norm
 import tempfile
 import uuid
 import shutil
+import asyncio
+from datetime import datetime, timedelta
 
 # Get the base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -188,3 +190,33 @@ async def get_temp_image(image_name: str):
         return FileResponse(image_path)
     else:
         raise HTTPException(status_code=404, detail="Image not found")
+
+@app.on_event("startup")
+async def setup_periodic_cleanup():
+    """Setup periodic cleanup of temporary files"""
+    async def cleanup_temp_images():
+        while True:
+            try:
+                await asyncio.sleep(3600)  # Run every hour
+                now = datetime.now()
+                temp_dir = tempfile.gettempdir()
+                
+                # Cleanup multiple face detection images
+                for filename in os.listdir(temp_dir):
+                    if filename.startswith("multiple_faces_") and filename.endswith(".png"):
+                        file_path = os.path.join(temp_dir, filename)
+                        file_creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
+                        
+                        # Remove files older than 1 hour
+                        if now - file_creation_time > timedelta(hours=1):
+                            try:
+                                os.remove(file_path)
+                                print(f"Cleaned up old temporary file: {filename}")
+                            except Exception as e:
+                                print(f"Error cleaning up {filename}: {str(e)}")
+            except Exception as e:
+                print(f"Error in cleanup task: {str(e)}")
+                await asyncio.sleep(60)  # Wait a minute before retrying if error occurs
+    
+    # Start the cleanup task
+    asyncio.create_task(cleanup_temp_images())

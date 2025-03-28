@@ -116,9 +116,9 @@ async def validate_image(file: UploadFile = File(...)):
         if error:
             if isinstance(error, str) and img is not None:
                 # Save the image with bounding boxes for multiple faces
-                unique_filename = f"multiple_faces_{uuid.uuid4()}.png"
+                unique_filename = f"multiple_faces_{uuid.uuid4()}.jpg"
                 output_image_path = os.path.join(tempfile.gettempdir(), unique_filename)
-                cv2.imwrite(output_image_path, img)
+                cv2.imwrite(output_image_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
                 return JSONResponse(
                     status_code=400,
                     content={
@@ -203,7 +203,7 @@ async def setup_periodic_cleanup():
                 
                 # Cleanup multiple face detection images
                 for filename in os.listdir(temp_dir):
-                    if filename.startswith("multiple_faces_") and filename.endswith(".png"):
+                    if filename.startswith("multiple_faces_") and filename.endswith(".jpg"):
                         file_path = os.path.join(temp_dir, filename)
                         file_creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
                         

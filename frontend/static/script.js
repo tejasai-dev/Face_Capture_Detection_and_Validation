@@ -134,13 +134,13 @@ async function capturePhoto() {
 
 function showDialog(type, title, message, imageUrl = null) {
     dialogTitle.textContent = title;
-    dialogMessage.textContent = message;
     
     // Set icon and button text based on type
     if (type === 'success') {
         dialogIcon.textContent = '✓';
         dialogIcon.className = 'success-icon';
         dialogButton.textContent = 'OK';
+        dialogMessage.textContent = message;
     } else {
         dialogIcon.textContent = '⚠️';
         dialogIcon.className = 'error-icon';
@@ -151,8 +151,17 @@ function showDialog(type, title, message, imageUrl = null) {
     if (imageUrl) {
         dialogImage.src = imageUrl;
         dialogImage.style.display = 'block';
+        // For multiple faces case, show message after the image
+        if (type === 'error' && title === 'Multiple Faces Detected in the Uploaded Image') {
+            dialogMessage.textContent = message;
+            // Move message element after the image
+            dialogImage.parentNode.insertBefore(dialogImage, dialogMessage);
+        } else {
+            dialogMessage.textContent = message;
+        }
     } else {
         dialogImage.style.display = 'none';
+        dialogMessage.textContent = message;
     }
     
     dialogOverlay.style.display = 'flex';

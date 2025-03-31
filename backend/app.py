@@ -63,7 +63,22 @@ def get_face_embedding(image_path):
     faces = detector.get(img_rgb)
     
     if not faces:
-        return None, "No Face Detected. Please Upload or Capture an Image Where Your Eyes, Nose, Ears, Lips, Forehead, and Chin are Clearly Visible", None
+        return None, "No face detected. Please upload or capture an image where your facial features (eyes, nose, ears, lips, forehead, and chin) are clearly visible.", None
+    
+    # Check for small/faraway face
+    face = faces[0]
+    bbox = face.bbox.astype(int)
+    face_width = bbox[2] - bbox[0]
+    face_height = bbox[3] - bbox[1]
+    face_area = face_width * face_height
+    image_area = img.shape[0] * img.shape[1]
+    face_ratio = face_area / image_area
+    
+    # If face takes up less than 5% of the image, consider it too small/far away
+    if face_ratio < 0.05:
+        # Draw bounding box around the small face
+        cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 10)
+        return None, "Your face is detected, but it is too far from the camera. Please move closer or upload a clearer, close-up photo for better detection.", img
     
     if len(faces) > 1:
         # Draw bounding boxes around detected faces
@@ -72,7 +87,6 @@ def get_face_embedding(image_path):
             cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 10)
         return None, "Multiple faces detected in the image.", img
 
-    face = faces[0]
     embedding = recognizer.get(img_rgb, face)
     return embedding, None, img
 
@@ -115,16 +129,28 @@ async def validate_image(file: UploadFile = File(...)):
         
         if error:
             if isinstance(error, str) and img is not None:
-                # Save the image with bounding boxes for multiple faces
-                unique_filename = f"multiple_faces_{uuid.uuid4()}.jpg"
+                # Determine error type and filename prefix
+                if "Multiple faces" in error:
+                    error_type = "multiple_faces"
+                    filename_prefix = "multiple_faces_"
+                elif "too far from the camera" in error:
+                    error_type = "small_face"
+                    filename_prefix = "small_face_"
+                else:
+                    error_type = "face_detection_error"
+                    filename_prefix = "face_error_"
+                
+                # Save the image with bounding boxes
+                unique_filename = f"{filename_prefix}{uuid.uuid4()}.jpg"
                 output_image_path = os.path.join(tempfile.gettempdir(), unique_filename)
                 cv2.imwrite(output_image_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                
                 return JSONResponse(
                     status_code=400,
                     content={
                         "success": False,
-                        "message": "Multiple faces detected in the image.",
-                        "type": "multiple_faces",
+                        "message": error,
+                        "type": error_type,
                         "image_with_bboxes": unique_filename
                     }
                 )
@@ -146,7 +172,7 @@ async def validate_image(file: UploadFile = File(...)):
                     status_code=400,
                     content={
                         "success": False,
-                        "message": "The Uploaded Image belongs to \"Guru Dev\". We can't process this image. Try to upload your image again.",
+                        "message": "The Uploaded Image belongs to \"Gurudev\". We cannot process it. Please upload your own image.",
                         "type": "guru_dev_match"
                     }
                 )
@@ -201,9 +227,10 @@ async def setup_periodic_cleanup():
                 now = datetime.now()
                 temp_dir = tempfile.gettempdir()
                 
-                # Cleanup multiple face detection images
+                # Cleanup face detection error images
                 for filename in os.listdir(temp_dir):
-                    if filename.startswith("multiple_faces_") and filename.endswith(".jpg"):
+                    if (filename.startswith(("multiple_faces_", "small_face_", "face_error_")) and 
+                        filename.endswith(".jpg")):
                         file_path = os.path.join(temp_dir, filename)
                         file_creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
                         

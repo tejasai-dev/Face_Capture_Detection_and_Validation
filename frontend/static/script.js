@@ -199,8 +199,15 @@ async function handleFile(file) {
             if (data.type === 'multiple_faces' && data.image_with_bboxes) {
                 showDialog(
                     'error',
-                    'Multiple Faces Detected in the Uploaded Image',
-                    'Retry with a Single Face Image',
+                    'Multiple Faces Detected',
+                    'Please ensure only one face is visible in your next capture or upload. Retry now.',
+                    `/temp_image/${data.image_with_bboxes}`
+                );
+            } else if (data.type === 'small_face' && data.image_with_bboxes) {
+                showDialog(
+                    'error',
+                    'Face Detected, But Too Far Away',
+                    'Please ensure your next capture is closer to the camera, or upload a clearer, close-up photo for better recognition.',
                     `/temp_image/${data.image_with_bboxes}`
                 );
             } else {

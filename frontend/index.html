@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Face Detection System</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -13,28 +14,67 @@
             <button class="option-button active" onclick="startCamera()">Take Photo</button>
             <button class="option-button" onclick="showUploadSection()">Upload Photo</button>
         </div>
-        <div class="upload-section" id="dropZone">
-            <p>Click To Upload An Image Of Your Face For Face Detection</p>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            <img id="previewImage" class="preview-image" alt="Preview">
-            <div class="upload-buttons" id="uploadButtons">
-                <button class="upload-button" onclick="submitPhoto(); event.stopPropagation();">Submit Photo</button>
-                <button class="upload-button reset" onclick="resetUpload(); event.stopPropagation();">Reset</button>
+
+        <div class="main-content">
+            <div class="upload-section" id="dropZone">
+                <p>Click To Upload An Image Of Your Face For Face Detection</p>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                <img id="previewImage" class="preview-image" alt="Preview">
+                <div class="upload-buttons" id="uploadButtons">
+                    <button class="upload-button" onclick="submitPhoto(); event.stopPropagation();">Submit Photo</button>
+                    <button class="upload-button reset" onclick="resetUpload(); event.stopPropagation();">Reset</button>
+                </div>
+                <div class="loading" id="loading"></div>
             </div>
         </div>
-        <div class="loading" id="loading"></div>
     </div>
 
     <!-- Camera View -->
     <div class="camera-container" id="cameraContainer">
-        <div class="camera-view">
-            <div class="camera-guidance">Face a light source, align your face properly, remove glasses, and tuck your hair behind your ears for better capturing of facial features</div>
-            <video id="videoElement" autoplay playsinline></video>
-            <div class="camera-overlay"></div>
-            <div class="face-outline"></div>
-            <div class="camera-buttons">
-                <button class="camera-button" onclick="closeCamera()">Close</button>
-                <button class="camera-button primary" onclick="capturePhoto()">Take Photo</button>
+        <div class="camera-content">
+            <div class="camera-view">
+                <div class="camera-guidance">face a light source, remove glasses, and tuck hair behind your ears for better facial features capture</div>
+                <video id="videoElement" autoplay playsinline></video>
+                <div class="camera-overlay"></div>
+                <div class="face-outline"></div>
+                
+                <!-- Guidelines for Camera View -->
+                <div class="guidelines-container camera-guidelines">
+                    <div class="guidelines">
+                        <div class="guideline-item">
+                            <i class="fas fa-camera"></i>
+                            <span>Allow Camera Access to Proceed</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Ensure Proper Lighting for Better Face Detection</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-expand"></i>
+                            <span>Keep your Face Within Frame</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-ban"></i>
+                            <span>Avoid Masks, Glasses, or Hats</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-user"></i>
+                            <span>Only one face should be in the frame</span>
+                        </div>
+                        <div class="guideline-item">
+                            <i class="fas fa-arrows-alt"></i>
+                            <span>Far Away Faces are not Allowed</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="camera-buttons">
+                    <button class="camera-button" onclick="closeCamera()">Close</button>
+                    <button class="camera-button primary" onclick="capturePhoto()">Take Photo</button>
+                </div>
+                
+                <!-- Camera Loading Indicator -->
+                <div class="camera-loading" id="cameraLoading"></div>
             </div>
         </div>
     </div>

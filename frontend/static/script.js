@@ -11,6 +11,7 @@ const dialogImage = document.getElementById('dialogImage');
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const loading = document.getElementById('loading');
+const cameraLoading = document.getElementById('cameraLoading');
 const optionButtons = document.querySelectorAll('.option-button');
 let selectedFile = null;
 
@@ -126,9 +127,12 @@ async function capturePhoto() {
     canvas.height = videoElement.videoHeight;
     canvas.getContext('2d').drawImage(videoElement, 0, 0);
     
+    // Show loading indicator
+    cameraLoading.style.display = 'block';
+    
     canvas.toBlob(async (blob) => {
         const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" });
-        await handleFile(file);
+        await handleFile(file, true);
     }, 'image/jpeg');
 }
 
@@ -182,8 +186,13 @@ function handleDialogButton() {
     }
 }
 
-async function handleFile(file) {
-    loading.style.display = 'block';
+async function handleFile(file, isFromCamera = false) {
+    if (isFromCamera) {
+        cameraLoading.style.display = 'block';
+    } else {
+        loading.style.display = 'block';
+    }
+    
     const formData = new FormData();
     formData.append('file', file);
 
@@ -226,6 +235,10 @@ async function handleFile(file) {
         showDialog('error', 'Error', 'An error occurred while processing the image.');
         console.error('Error:', error);
     } finally {
-        loading.style.display = 'none';
+        if (isFromCamera) {
+            cameraLoading.style.display = 'none';
+        } else {
+            loading.style.display = 'none';
+        }
     }
 }

@@ -13,6 +13,11 @@ import uuid
 import shutil
 import asyncio
 from datetime import datetime, timedelta
+import requests
+from pydantic import BaseModel
+
+class ImageURL(BaseModel):
+    url: str
 
 # Get the base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -179,6 +184,120 @@ async def validate_image(file: UploadFile = File(...)):
 
         # If all checks pass, save the image to uploads directory
         unique_filename = f"face_{uuid.uuid4()}{os.path.splitext(file.filename)[-1]}"
+        upload_path = os.path.join(UPLOADS_DIR, unique_filename)
+        shutil.copy2(temp_image_path, upload_path)
+
+        # Clean up temp file
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Image validation successful. Your image has been saved.",
+                "type": "success",
+                "image_path": f"/uploads/{unique_filename}"
+            }
+        )
+    
+    except Exception as e:
+        if 'temp_image_path' in locals() and os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"An error occurred: {str(e)}",
+                "type": "server_error"
+            }
+        )
+
+@app.post("/validate-image-url")
+async def validate_image_url(image_data: ImageURL):
+    try:
+        # Download image from URL
+        response = requests.get(image_data.url)
+        if response.status_code != 200:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "Failed to fetch image from URL",
+                    "type": "url_error"
+                }
+            )
+        
+        # Save temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp:
+            temp.write(response.content)
+            temp_image_path = temp.name
+
+        if not os.path.exists(temp_image_path) or os.path.getsize(temp_image_path) == 0:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": "Invalid or empty image from URL.",
+                    "type": "file_error"
+                }
+            )
+
+        # Check for face presence and handle multiple faces
+        embedding, error, img = get_face_embedding(temp_image_path)
+        
+        if error:
+            if isinstance(error, str) and img is not None:
+                # Determine error type and filename prefix
+                if "Multiple faces" in error:
+                    error_type = "multiple_faces"
+                    filename_prefix = "multiple_faces_"
+                elif "too far from the camera" in error:
+                    error_type = "small_face"
+                    filename_prefix = "small_face_"
+                else:
+                    error_type = "face_detection_error"
+                    filename_prefix = "face_error_"
+                
+                # Save the image with bounding boxes
+                unique_filename = f"{filename_prefix}{uuid.uuid4()}.jpg"
+                output_image_path = os.path.join(tempfile.gettempdir(), unique_filename)
+                cv2.imwrite(output_image_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "message": error,
+                        "type": error_type,
+                        "image_with_bboxes": unique_filename
+                    }
+                )
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": error,
+                    "type": "face_detection_error"
+                }
+            )
+            
+        # Check against Guru Dev
+        threshold = 0.45
+        for guru_embedding in gurudev_embedding_list:
+            similarity = cosine_similarity(embedding, guru_embedding)
+            if similarity > threshold:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "message": "The Uploaded Image belongs to \"Gurudev\". We cannot process it. Please upload your own image.",
+                        "type": "guru_dev_match"
+                    }
+                )
+
+        # If all checks pass, save the image to uploads directory
+        unique_filename = f"face_{uuid.uuid4()}.jpg"
         upload_path = os.path.join(UPLOADS_DIR, unique_filename)
         shutil.copy2(temp_image_path, upload_path)
 

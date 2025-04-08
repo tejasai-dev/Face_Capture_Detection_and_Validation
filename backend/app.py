@@ -15,6 +15,9 @@ import asyncio
 from datetime import datetime, timedelta
 import requests
 from pydantic import BaseModel
+from PIL import Image
+from transformers import pipeline, AutoConfig
+from pathlib import Path
 
 class ImageURL(BaseModel):
     url: str
@@ -49,6 +52,9 @@ detector.prepare(ctx_id=-1, det_thresh=0.35)
 recognizer = get_model(os.path.join(MODEL_DIR, "models", "antelopev2", "glintr100.onnx"))
 recognizer.prepare(ctx_id=-1)
 
+# Initialize AI image detection model
+ai_detector = pipeline("image-classification", model="hchcsuim/FaceAIorNot")
+
 # Load Guru Dev embeddings
 GURUDEV_EMBEDDING_PATH = os.path.join(BASE_DIR, "..", "Gurudev_Embedding", "gurudev_embedding.npy")
 gurudev_embeddings = np.load(GURUDEV_EMBEDDING_PATH, allow_pickle=True).item()
@@ -57,6 +63,25 @@ gurudev_embedding_list = list(gurudev_embeddings.values())
 def cosine_similarity(emb1, emb2):
     """Calculate cosine similarity between two embeddings"""
     return np.dot(emb1, emb2) / (norm(emb1) * norm(emb2))
+
+def is_ai_generated(image_path):
+    """Check if an image is AI-generated"""
+    try:
+        # Load and process image
+        image = Image.open(image_path)
+        
+        # Get prediction
+        result = ai_detector(image)
+        
+        # Determine if image is AI-generated or not
+        prediction = result[0]
+        is_ai_generated = prediction['label'] == 'AI-generated'
+        confidence = prediction['score']
+        
+        return is_ai_generated, confidence
+    except Exception as e:
+        print(f"Error in AI detection: {str(e)}")
+        return False, 0.0
 
 def get_face_embedding(image_path):
     """Extract face embedding from an image"""
@@ -181,6 +206,18 @@ async def validate_image(file: UploadFile = File(...)):
                         "type": "guru_dev_match"
                     }
                 )
+                
+        # 4. Check if image is AI-generated
+        is_ai, confidence = is_ai_generated(temp_image_path)
+        if is_ai:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": f"AI-generated images are not allowed. Confidence: {confidence:.2f}",
+                    "type": "ai_generated"
+                }
+            )
 
         # If all checks pass, save the image to uploads directory
         unique_filename = f"face_{uuid.uuid4()}{os.path.splitext(file.filename)[-1]}"
@@ -295,6 +332,18 @@ async def validate_image_url(image_data: ImageURL):
                         "type": "guru_dev_match"
                     }
                 )
+                
+        # Check if image is AI-generated
+        is_ai, confidence = is_ai_generated(temp_image_path)
+        if is_ai:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "success": False,
+                    "message": f"AI-generated images are not allowed. Confidence: {confidence:.2f}",
+                    "type": "ai_generated"
+                }
+            )
 
         # If all checks pass, save the image to uploads directory
         unique_filename = f"face_{uuid.uuid4()}.jpg"

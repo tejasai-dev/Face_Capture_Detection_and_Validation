@@ -1,57 +1,72 @@
 # Face Capture & Detection System
 
-A web application that captures and validates face images for face detection and recognition.
+A web application for capturing and validating face images with multiple validation checks.
 
 ## Features
-- **Live Camera Capture**
-  - Uses device camera to capture face images
-  - Shows circular guide for face alignment
-  - Captures photo with one click
-  - Validates captured image instantly
 
-- **Image Upload Support**
-  - Accepts image files (JPG/JPEG/PNG)
-  - Shows image preview before upload
-  - Validates image format and size
-  - Processes uploaded image for face detection
+- **Face Detection**: Ensures that a face is present in the uploaded image
+- **Multiple Face Detection**: Prevents uploading images with multiple faces
+- **Face Size Validation**: Ensures the face is not too small or far away
+- **Guru Dev Detection**: Prevents uploading images of Guru Dev
+- **AI-Generated Image Detection**: Prevents uploading AI-generated images
+- **Camera Capture**: Allows capturing photos directly from the camera
+- **Image Upload**: Supports uploading images from the device
 
-- **Face Detection & Validation**
-  - Detects single face in image
-  - Shows error if multiple faces detected
-  - Validates face visibility (eyes, nose, ears)
-  - Displays error messages with visual feedback
+## Technical Implementation
 
-- **Guru Dev Image Filtering**
-  - Compares face with Guru Dev database
-  - Blocks Guru Dev images
-  - Shows specific error for Guru Dev matches
-  - Uses face embedding comparison
+### Backend
 
-- **Modern, Responsive UI**
-  - Shows loading during processing
-  - Displays success/error dialogs
-  - Provides clear user instructions
-  - Works on both desktop and mobile
+- **FastAPI**: Web framework for building the API
+- **InsightFace**: Face detection and recognition
+- **Transformers**: AI image detection using the "hchcsuim/FaceAIorNot" model
+- **OpenCV**: Image processing
+- **Pillow**: Image handling
 
-## Requirements
-- Python 3.8 to 3.9
-- Dependencies listed in `requirements.txt`
+### Frontend
 
-## Setup
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+- **HTML/CSS/JavaScript**: Frontend implementation
+- **Responsive Design**: Works on various screen sizes
 
-2. Run the application:
-```bash
-uvicorn backend.app:app --reload
-```
+## Installation
 
-3. Open browser and navigate to `http://localhost:8000`
+1. Clone the repository
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+## Running the Application
+
+1. Start the application:
+   ```
+   uvicorn backend.app:app --reload
+   ```
+2. Open your browser and navigate to `http://localhost:8000`
 
 ## Usage
-- Click "Take Photo" to use camera
-- Click "Upload Photo" to upload an image
-- Follow on-screen instructions for face capture
-- System will validate the image and provide feedback 
+
+1. Choose between "Take Photo" or "Upload Photo"
+2. Follow the guidelines for capturing or uploading a photo
+3. The system will validate the image and provide feedback
+4. If successful, the image will be saved
+
+## Validation Checks
+
+1. **Image Format**: Ensures the image is in a supported format (JPG, JPEG, PNG)
+2. **Face Detection**: Ensures a face is present in the image
+3. **Multiple Face Detection**: Ensures only one face is present
+4. **Face Size Validation**: Ensures the face is not too small or far away
+5. **Guru Dev Detection**: Ensures the image is not of Guru Dev
+6. **AI-Generated Detection**: Checks if the image is AI-generated
+
+## Troubleshooting
+
+If you encounter dependency conflicts during installation, try the following:
+
+1. Upgrade pip to the latest version: `python -m pip install --upgrade pip`
+2. Install dependencies with the `--no-deps` flag for problematic packages:
+   ```
+   pip install --no-deps package_name
+   ```
+3. If issues persist, try installing packages one by one to identify conflicts
+

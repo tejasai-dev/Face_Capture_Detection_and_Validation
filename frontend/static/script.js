@@ -219,6 +219,13 @@ async function handleFile(file, isFromCamera = false) {
                     'Please ensure your next capture is closer to the camera, or upload a clearer, close-up photo for better recognition.',
                     `/temp_image/${data.image_with_bboxes}`
                 );
+            } else if (data.type === 'ai_generated') {
+                showDialog(
+                    'error',
+                    'AI-Generated Image Detected',
+                    'AI-generated images are not allowed. Please upload a real photo of yourself.',
+                    null
+                );
             } else {
                 showDialog('error', 'Error', data.message);
             }

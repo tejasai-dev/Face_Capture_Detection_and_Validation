@@ -30,11 +30,11 @@ A web application for capturing and validating face images with multiple validat
 ## Installation
 
 1. Clone the repository
-2. create the python virtual environment with python version between 3.8 to 3.10
+2. Create the python virtual environment with python version between 3.8 to 3.10
 ```
 python -m venv face_capture_env
 ```
-Activate the Environment
+Activate the venv
 ```
 .\face_capture_env\Scripts\activate
 ```

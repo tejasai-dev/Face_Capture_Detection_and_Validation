@@ -38,11 +38,10 @@ Activate the venv
 ```
 .\face_capture_env\Scripts\activate
 ```
-3. Download the Microsoft C++ Build Tools for insightface library
+3. Download the Microsoft C++ Build Tools for insightface library and then `Restart` the system
 ```
 https://visualstudio.microsoft.com/visual-cpp-build-tools/
 ```
-->Restart the system.
 4. Install dependencies:
    ```
    pip install -r requirements.txt
